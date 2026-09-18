@@ -3,86 +3,44 @@ name: Build Busino APK
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # دستی هم بشه اجرا کرد
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # ═══════════════════════════════════════════
-      #  ۱. گرفتن کد
-      # ═══════════════════════════════════════════
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ═══════════════════════════════════════════
-      #  ۲. نصب Java (برای build اندروید)
-      # ═══════════════════════════════════════════
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # ═══════════════════════════════════════════
-      #  ۳. نصب Flutter
-      # ═══════════════════════════════════════════
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.4'
           channel: 'stable'
           cache: true
 
-      # ═══════════════════════════════════════════
-      #  ۴. گرفتن پکیج‌ها
-      # ═══════════════════════════════════════════
+      - name: Flutter version
+        run: flutter --version
+
       - name: Install dependencies
         run: flutter pub get
 
-      # ═══════════════════════════════════════════
-      #  ۵. تحلیل کد (اختیاری - خطا نمی‌ده)
-      # ═══════════════════════════════════════════
       - name: Analyze code
-        run: flutter analyze || true
+        run: flutter analyze
+        continue-on-error: true
 
-      # ═══════════════════════════════════════════
-      #  ۶. ساخت APK (نسخه‌ی release)
-      # ═══════════════════════════════════════════
       - name: Build APK
         run: flutter build apk --release --split-per-abi
 
-      # ═══════════════════════════════════════════
-      #  ۷. آپلود APK به عنوان artifact
-      # ═══════════════════════════════════════════
-      - name: Upload APK as artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: busino-apk
           path: build/app/outputs/flutter-apk/*.apk
           retention-days: 30
-
-      # ═══════════════════════════════════════════
-      #  ۸. ساخت Release (اختیاری - تگ خودکار)
-      # ═══════════════════════════════════════════
-      - name: Create Release
-        if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Busino v1.0.${{ github.run_number }}
-          body: |
-            🚌 نسخه‌ی جدید Busino آماده‌ی دانلود است!
-
-            ## 📱 نصب
-            ۱. فایل APK مناسب گوشیت رو دانلود کن:
-               - **arm64-v8a** → اکثر گوشی‌های جدید (پیشنهادی)
-               - **armeabi-v7a** → گوشی‌های قدیمی‌تر
-               - **x86_64** → شبیه‌سازها
-
-            ۲. روی فایل APK بزن و نصب کن
-            ۳. اگه پیام «نصب از منابع نامشخص» آمد، اجازه بده
-          files: build/app/outputs/flutter-apk/*.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

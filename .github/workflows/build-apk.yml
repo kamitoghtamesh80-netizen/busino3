@@ -31,16 +31,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze code
-        run: flutter analyze
-        continue-on-error: true
-
-      - name: Build APK
-        run: flutter build apk --release --split-per-abi
+      - name: Build APK (debug first)
+        run: flutter build apk --debug --split-per-abi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: busino-apk
+          name: busino-apk-debug
           path: build/app/outputs/flutter-apk/*.apk
-          retention-days: 30

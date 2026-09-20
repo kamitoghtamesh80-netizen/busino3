@@ -22,8 +22,17 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.47.4'
           channel: 'stable'
           cache: true
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required Android SDK
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-37.0" "build-tools;37.0.0"
 
       - name: Flutter version
         run: flutter --version
@@ -31,11 +40,18 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK (debug first)
-        run: flutter build apk --debug --split-per-abi
+      - name: Analyze Dart code
+        run: flutter analyze
 
-      - name: Upload APK
+      - name: Run tests
+        run: flutter test
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          name: busino-apk-debug
-          path: build/app/outputs/flutter-apk/*.apk
+          name: busino-apk-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error

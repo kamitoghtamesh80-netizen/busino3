@@ -28,7 +28,8 @@ jobs:
 
       - name: Install required Android SDK
         run: |
-          sdkmanager_path="$(command -v sdkmanager)"
+          sdkmanager_path="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort | tail -n 1)"
+          test -n "$sdkmanager_path"
           yes | "$sdkmanager_path" --licenses >/dev/null || true
           "$sdkmanager_path" \
             "platform-tools" \
